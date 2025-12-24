@@ -14,7 +14,7 @@ export default function LoginScreen({ onLogin, onBack }) {
       const data = await response.json();
   
       if (response.ok) {
-        onLogin(data.username); // Pass username to App.js
+        onLogin(data.username,password); // Pass username to App.js
       } else {
         Alert.alert('Login Failed', data.detail || 'Invalid credentials');
       }
