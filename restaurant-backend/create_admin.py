@@ -1,35 +1,57 @@
-
+import os
 import bcrypt
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
-from pydantic import BaseModel
-from typing import List, Optional
 
-app = FastAPI()
+# --- CONFIGURATION ---
+# PASTE YOUR SUPABASE POOLER URL HERE (The one starting with postgresql://)
+# Make sure to replace [YOUR-PASSWORD] with your actual password
+DATABASE_URL = "postgresql://postgres.your_user:your_password@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
 
+# Setup Database Connection
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
 
-@app.post("/api/login")
-def login(username: str, password: str, db: Session = Depends(get_db)):
-    # 1. Debug: Print what the server actually receives
-    print(f"Login attempt: user={username}, password_len={len(password)}") 
+# Define User Model
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
 
-    user = db.query(User).filter(User.username == username).first()
+# Create the table if it doesn't exist
+Base.metadata.create_all(bind=engine)
+
+def create_or_update_admin():
+    db = SessionLocal()
+    username = "admin"
+    password = "admin123"
+
+    # 1. Generate the Hash using pure bcrypt
+    # (We convert strings to bytes because bcrypt requires bytes)
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_pw = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+
+    # 2. Check if admin exists
+    existing_user = db.query(User).filter(User.username == username).first()
+
+    if existing_user:
+        print(f"User '{username}' found. Updating password...")
+        existing_user.hashed_password = hashed_pw
+    else:
+        print(f"User '{username}' not found. Creating new user...")
+        new_user = User(username=username, hashed_password=hashed_pw)
+        db.add(new_user)
     
-    if not user:
-        raise HTTPException(status_code=400, detail="User not found")
+    # 3. Save changes
+    db.commit()
+    print("✅ Success! You can now login with:")
+    print(f"User: {username}")
+    print(f"Pass: {password}")
+    db.close()
 
-    # 2. Check Password using pure bcrypt
-    # We must encode strings to bytes for bcrypt
-    try:
-        # password.encode('utf-8') turns "admin123" into bytes
-        # user.hashed_password.encode('utf-8') turns the DB hash into bytes
-        if not bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
-             raise HTTPException(status_code=400, detail="Incorrect password")
-    except Exception as e:
-        print(f"Hashing Error: {e}")
-        raise HTTPException(status_code=500, detail="Authentication system error")
-    
-    return {"message": "Login successful", "username": user.username}
+if __name__ == "__main__":
+    create_or_update_admin()

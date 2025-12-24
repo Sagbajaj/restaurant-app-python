@@ -1,5 +1,5 @@
 import os
-import bcrypt
+import bcrypt  # <--- Using pure bcrypt now
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
@@ -9,18 +9,25 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 # --- DATABASE CONFIG ---
-# Render will provide the DATABASE_URL environment variable
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
+# Fallback for local testing if env var is missing
+if not DATABASE_URL:
+    print("WARNING: No DATABASE_URL found. App will crash on DB access.")
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-# Setup Password Hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # --- DB MODELS ---
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+
 class Restaurant(Base):
     __tablename__ = "restaurants"
     id = Column(Integer, primary_key=True, index=True)
@@ -35,7 +42,6 @@ class Restaurant(Base):
     wifi_ssid = Column(String)
     wifi_password = Column(String)
     
-    # Relationship to reviews (Make sure you have the Review class defined below)
     reviews = relationship("Review", back_populates="restaurant", cascade="all, delete-orphan")
 
 class Review(Base):
@@ -47,10 +53,10 @@ class Review(Base):
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
     restaurant = relationship("Restaurant", back_populates="reviews")
 
-# Create tables in Supabase
+# Create tables
 Base.metadata.create_all(bind=engine)
 
-# --- SCHEMAS (Pydantic) ---
+# --- SCHEMAS ---
 class ReviewSchema(BaseModel):
     id: Optional[int]
     user: str
@@ -70,14 +76,7 @@ class RestaurantSchema(BaseModel):
     reviews: List[ReviewSchema] = []
     class Config: from_attributes = True
 
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    
-    
-# --- API ---
+# --- APP ---
 app = FastAPI()
 
 app.add_middleware(
@@ -92,13 +91,35 @@ def get_db():
     try: yield db
     finally: db.close()
 
+# --- NEW AUTHENTICATION LOGIC (BCRYPT) ---
+@app.post("/api/login")
+def login(username: str, password: str, db: Session = Depends(get_db)):
+    # 1. Fetch user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+
+    # 2. Verify password using BCRYPT directly
+    try:
+        # Encode inputs to bytes for checking
+        if not bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
+             raise HTTPException(status_code=400, detail="Incorrect password")
+    except Exception as e:
+        print(f"Auth Error: {e}")
+        raise HTTPException(status_code=500, detail="Authentication error")
+    
+    return {"message": "Login successful", "username": user.username}
+
+# --- OTHER ROUTES ---
 @app.get("/api/restaurants", response_model=List[RestaurantSchema])
 def get_restaurants(db: Session = Depends(get_db)):
     return db.query(Restaurant).all()
 
 @app.post("/api/restaurants", response_model=RestaurantSchema)
 def create_restaurant(rest: RestaurantSchema, db: Session = Depends(get_db)):
-    db_rest = Restaurant(**rest.model_dump(exclude={"reviews", "id"}))
+    # Safely convert Pydantic model to dict
+    data = rest.model_dump(exclude={"reviews", "id"})
+    db_rest = Restaurant(**data)
     db.add(db_rest)
     db.commit()
     db.refresh(db_rest)
@@ -109,27 +130,3 @@ def delete_review(review_id: int, db: Session = Depends(get_db)):
     db.query(Review).filter(Review.id == review_id).delete()
     db.commit()
     return {"message": "Review deleted"}
-
-# Add this endpoint to your FastAPI app
-@app.post("/api/login")
-def login(username: str, password: str, db: Session = Depends(get_db)):
-    # 1. Debug: Print what the server actually receives
-    print(f"Login attempt: user={username}, password_len={len(password)}") 
-
-    user = db.query(User).filter(User.username == username).first()
-    
-    if not user:
-        raise HTTPException(status_code=400, detail="User not found")
-
-    # 2. Check Password using pure bcrypt
-    # We must encode strings to bytes for bcrypt
-    try:
-        # password.encode('utf-8') turns "admin123" into bytes
-        # user.hashed_password.encode('utf-8') turns the DB hash into bytes
-        if not bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
-             raise HTTPException(status_code=400, detail="Incorrect password")
-    except Exception as e:
-        print(f"Hashing Error: {e}")
-        raise HTTPException(status_code=500, detail="Authentication system error")
-    
-    return {"message": "Login successful", "username": user.username}
