@@ -1,5 +1,5 @@
 // REPLACE with your actual Render URL
-const BASE_URL = 'https://your-app-name.onrender.com/api'; 
+const BASE_URL = 'https://restaurant-app-python.onrender.com/api'; 
 
 export const loginUser = async (username, password) => {
   try {
