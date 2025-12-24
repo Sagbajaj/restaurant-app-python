@@ -24,18 +24,19 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class Restaurant(Base):
     __tablename__ = "restaurants"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String) [cite: 21]
-    res_type = Column(String) [cite: 22]
-    cuisine = Column(String) [cite: 22]
-    location = Column(String) [cite: 23]
-    address = Column(String) [cite: 24]
-    phone = Column(String) [cite: 25, 26]
-    email = Column(String) [cite: 26]
-    website = Column(String) [cite: 26]
-    wifi_ssid = Column(String) [cite: 19]
-    wifi_password = Column(String) [cite: 19]
+    name = Column(String)
+    res_type = Column(String)
+    cuisine = Column(String)
+    location = Column(String)
+    address = Column(String)
+    phone = Column(String)
+    email = Column(String)
+    website = Column(String)
+    wifi_ssid = Column(String)
+    wifi_password = Column(String)
     
-    reviews = relationship("Review", back_populates="restaurant", cascade="all, delete-orphan") [cite: 15]
+    # Relationship to reviews (Make sure you have the Review class defined below)
+    reviews = relationship("Review", back_populates="restaurant", cascade="all, delete-orphan")
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -105,7 +106,7 @@ def create_restaurant(rest: RestaurantSchema, db: Session = Depends(get_db)):
 
 @app.delete("/api/reviews/{review_id}")
 def delete_review(review_id: int, db: Session = Depends(get_db)):
-    db.query(Review).filter(Review.id == review_id).delete() [cite: 16]
+    db.query(Review).filter(Review.id == review_id).delete()
     db.commit()
     return {"message": "Review deleted"}
 
