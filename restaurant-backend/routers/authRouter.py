@@ -18,8 +18,8 @@ app.add_middleware(
 )
 
 # --- NEW AUTHENTICATION LOGIC (BCRYPT) ---
-# @app.post("/api/login")
-# def login(username: str, password: str, db: Session = Depends(get_db)):
+@app.post("/api/login")
+def login(username: str, password: str, db: Session = Depends(get_db)):
     # 1. Fetch user
     user = db.query(User).filter(User.username == username).first()
     if not user:
