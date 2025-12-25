@@ -70,7 +70,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
+app.include_router(auth)
 
 
 # --- OTHER ROUTES ---
