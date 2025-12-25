@@ -7,7 +7,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from pydantic import BaseModel
 from typing import List, Optional
-from . import models, schemas
 from .routers import authRouter as auth
 
 
