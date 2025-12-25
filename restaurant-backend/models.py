@@ -96,13 +96,13 @@ def login(username: str, password: str, db: Session = Depends(get_db)):
     
     return {"message": "Login successful", "username": user.username}
 
-# --- OTHER ROUTES ---
-@app.get("/api/restaurants", response_model=List[RestaurantSchema])
-def get_restaurants(db: Session = Depends(get_db)):
-    return db.query(Restaurant).all()
+# # --- OTHER ROUTES ---
+# @app.get("/api/restaurants", response_model=List[RestaurantSchema])
+# def get_restaurants(db: Session = Depends(get_db)):
+#     return db.query(Restaurant).all()
 
-@app.post("/api/restaurants", response_model=RestaurantSchema)
-def create_restaurant(rest: RestaurantSchema, db: Session = Depends(get_db)):
+# @app.post("/api/restaurants", response_model=RestaurantSchema)
+# def create_restaurant(rest: RestaurantSchema, db: Session = Depends(get_db)):
     # Safely convert Pydantic model to dict
     data = rest.model_dump(exclude={"reviews", "id"})
     db_rest = Restaurant(**data)
