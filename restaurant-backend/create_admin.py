@@ -1,4 +1,3 @@
-import os
 import bcrypt
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker
@@ -7,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 # --- CONFIGURATION ---
 # PASTE YOUR SUPABASE POOLER URL HERE (The one starting with postgresql://)
 # Make sure to replace [YOUR-PASSWORD] with your actual password
-DATABASE_URL = "postgresql://postgres.your_user:your_password@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+DATABASE_URL = "postgresql://postgres.cpnaqwprmvgmejqajfks:Qemmd90RyFVQtmev@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
 
 # Setup Database Connection
 engine = create_engine(DATABASE_URL)
