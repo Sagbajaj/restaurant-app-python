@@ -2,8 +2,8 @@ import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import get_db
-from models.users import User
 from schemas.usersSchema import UserCreate, UserResponse, UserLogin
+from models import User
 
 router = APIRouter(
     prefix="/auth",
