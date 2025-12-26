@@ -6,7 +6,7 @@ from schemas.usersSchema import UserCreate, UserResponse, UserLogin
 from models.users import User
 
 router = APIRouter(
-    prefix="/auth",
+    prefix="/api",
     tags=["Authentication"]
 )
 
@@ -45,6 +45,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
+    print("in login")
     # 1. Find User
     user = db.query(User).filter(User.username == user_data.username).first()
     
