@@ -9,6 +9,17 @@ export default function LoginScreen({ onLogin, onBack }) {
     try {
       const response = await fetch(`https://restaurant-app-python.onrender.com/api/login?username=${username}&password=${password}`, {
         method: 'POST',
+        
+        // 2. THIS HEADER IS MANDATORY for FastAPI Pydantic models
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+        // 3. CONVERT OBJECT TO JSON STRING
+        body: JSON.stringify({
+          username: username, // ensure these variable names match your state
+          password: password
+        }),
       });
   
       const data = await response.json();
@@ -39,7 +50,7 @@ export default function LoginScreen({ onLogin, onBack }) {
         value={password} onChangeText={setPassword} 
       />
       
-      <TouchableOpacity style={styles.btn} onPress={() => onLogin(username, password)}>
+      <TouchableOpacity style={styles.btn} onPress={handleLogin}>
         <Text style={styles.btnText}>Login</Text>
       </TouchableOpacity>
 
