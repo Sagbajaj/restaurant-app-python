@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from routers import authRouter as auth
-
+from routers import restaurantsRouter as restaurant
 
 
 # --- DB MODELS ---
@@ -71,7 +71,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-
+app.include_router(restaurant.router)
 
 # --- OTHER ROUTES ---
 # @app.get("/api/restaurants", response_model=List[RestaurantSchema])

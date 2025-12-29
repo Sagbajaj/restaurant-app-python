@@ -4,9 +4,6 @@ import { Alert } from 'react-native';
 // 1. Data Source (Local Mock Data)
 import { INITIAL_RESTAURANTS } from '../../src/data/mockData';
 
-// 2. API (Cloud Login)
-import { loginUser } from '../../src/api/api';
-
 // 3. Screens
 import LoginScreen from '../../src/screens/LoginScreen';
 import HomeScreen from '../../src/screens/HomeScreen';
@@ -28,29 +25,91 @@ export default function App() {
   };
 
   // --- CLOUD ACTION: LOGIN ---
-  const handleLogin = async (username: any, password: any) => {
-    try {
-      // Connect to Render Database
-      const data = await loginUser(username, password);
-      setUser(data.username);
-      navigateTo('ADMIN_DASHBOARD');
-    } catch (error) {
-      Alert.alert("Login Failed", "Invalid username or password.");
-    }
+  const handleLogin = (username: any, role: any) => {
+    // 1. The API call ALREADY happened in LoginScreen. 
+    // We don't need to fetch again.
+    
+    console.log("Parent received login success for:", username);
+  
+    // 2. Just update state and navigate
+    setUser(username); // or whatever your user object structure is
+    navigateTo('ADMIN_DASHBOARD');
   };
 
   // --- LOCAL ACTIONS (Mock Data) ---
-  const handleSaveRestaurant = (formData: { id: string; }) => {
-    if (formData.id) {
-      // Edit existing
-      setRestaurants(restaurants.map(r => r.id === formData.id ? formData : r));
-    } else {
-      // Add new
-      const newRest = { ...formData, id: Math.random().toString(), reviews: [], menu: [] };
-      setRestaurants([...restaurants, newRest]);
-    }
-    navigateTo('ADMIN_DASHBOARD');
-  };
+  // Inside your App.js or Screen Component
+
+const handleSaveRestaurant = async (formData: { name: any; res_type: any; cuisine: any; location: any; address: any; phone: any; email: any; website: any; wifi_ssid: any; wifi_password: any; id: string; }) => {
+  try {
+      const BASE_URL = 'https://restaurant-app-python.onrender.com/api/restaurants';
+      let response;
+      let method = 'POST';
+      let url = BASE_URL;
+
+      // --- 1. PREPARE DATA ---
+      // The backend expects specific fields. Remove 'id' from the body if creating.
+      // Also remove 'reviews'/'menu' if your form adds them, as the backend RestaurantCreate schema might not expect them yet.
+      const bodyData = {
+          name: formData.name,
+          res_type: formData.res_type,
+          cuisine: formData.cuisine,
+          location: formData.location,
+          address: formData.address,
+          phone: formData.phone,
+          email: formData.email,
+          website: formData.website,
+          wifi_ssid: formData.wifi_ssid,
+          wifi_password: formData.wifi_password
+      };
+
+      // --- 2. DECIDE: CREATE OR EDIT? ---
+      if (formData.id) {
+          // EDIT MODE
+          method = 'PUT';
+          url = `${BASE_URL}/${formData.id}`; // e.g., /api/restaurants/5
+      } else {
+          // CREATE MODE
+          method = 'POST';
+          url = `${BASE_URL}/`; // Note: FastAPI creates usually end in /
+      }
+
+      // --- 3. SEND TO SERVER ---
+      response = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyData),
+      });
+
+      const savedRestaurant = await response.json();
+
+      if (!response.ok) {
+          Alert.alert("Error", savedRestaurant.detail || "Failed to save");
+          return;
+      }
+
+      console.log("Success:", savedRestaurant);
+
+      // --- 4. UPDATE LOCAL STATE ---
+      // Option A: Just reload the whole list from server (Easiest & Safest)
+      // fetchRestaurants(); 
+      
+      // Option B: Manually update local list (Faster UI)
+      if (formData.id) {
+          // Replace the old one with the response from server
+          setRestaurants(prev => prev.map(r => r.id === formData.id ? savedRestaurant : r));
+      } else {
+          // Add the new one (which now has a REAL database ID)
+          setRestaurants(prev => [...prev, savedRestaurant]);
+      }
+
+      // Navigate back
+      navigateTo('ADMIN_DASHBOARD');
+
+  } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Could not connect to server");
+  }
+};
 
   const handleDeleteReview = (restId: string, reviewId: string) => {
     const updated = restaurants.map(r => {
