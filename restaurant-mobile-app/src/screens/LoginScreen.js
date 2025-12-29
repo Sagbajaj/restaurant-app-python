@@ -4,20 +4,29 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 export default function LoginScreen({ onLogin, onBack }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const handleLogin = async (e) => {
+    // 1. STOP THE BROWSER from refreshing/submitting the form automatically
+    if (e && e.preventDefault) { 
+      e.preventDefault(); 
+    }
 
-  const handleLogin = async () => {
+    // Basic validation
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter both username and password");
+      return;
+    }
+
     try {
-      const response = await fetch(`https://restaurant-app-python.onrender.com/api/login?username=${username}&password=${password}`, {
+      // 2. CLEAN URL: Remove "?username=..." from the end. 
+      // Only send the base URL.
+      const response = await fetch('https://restaurant-app-python.onrender.com/api/login', {
         method: 'POST',
-        
-        // 2. THIS HEADER IS MANDATORY for FastAPI Pydantic models
         headers: {
           'Content-Type': 'application/json',
         },
-        
-        // 3. CONVERT OBJECT TO JSON STRING
+        // 3. Body sends the data (JSON)
         body: JSON.stringify({
-          username: username, // ensure these variable names match your state
+          username: username,
           password: password
         }),
       });
@@ -25,11 +34,15 @@ export default function LoginScreen({ onLogin, onBack }) {
       const data = await response.json();
   
       if (response.ok) {
-        onLogin(data.username,data.password); // Pass username to App.js
+        console.log("Login Success:", data);
+        onLogin(data.username, data.password); 
       } else {
+        // Log the error to see exactly what the server says
+        console.log("Server Error:", data);
         Alert.alert('Login Failed', data.detail || 'Invalid credentials');
       }
     } catch (error) {
+      console.error("Network Error:", error);
       Alert.alert('Error', 'Could not connect to server');
     }
   };
@@ -50,7 +63,7 @@ export default function LoginScreen({ onLogin, onBack }) {
         value={password} onChangeText={setPassword} 
       />
       
-      <TouchableOpacity style={styles.btn} onPress={handleLogin}>
+      <TouchableOpacity style={styles.btn} onPress={(e) => handleLogin(e)}>
         <Text style={styles.btnText}>Login</Text>
       </TouchableOpacity>
 
