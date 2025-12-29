@@ -6,7 +6,7 @@ class RestaurantBase(BaseModel):
     name: str
     res_type: str  # e.g., "Cafe", "Fine Dining"
     cuisine: str   # e.g., "Indian", "Italian"
-    address: str
+    address: Optional[str] = None
     location: str  # e.g., "Mumbai"
     phone: str
     email: Optional[str] = None

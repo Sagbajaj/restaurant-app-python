@@ -5,9 +5,9 @@ export default function RestaurantForm({ initialData, onSave, onCancel }) {
   // If initialData exists, we are EDITING; otherwise, we are ADDING
   const [formData, setFormData] = useState(initialData || {
     name: '',
-    type: '',
+    res_type: '',
     cuisine: '',
-    address: '',
+    location: '',
     phone: '',
     email: '',
     website: '',
@@ -16,7 +16,7 @@ export default function RestaurantForm({ initialData, onSave, onCancel }) {
 
   const handleSave = () => {
     // Basic validation
-    if (!formData.name || !formData.type) return;
+    if (!formData.name || !formData.res_type) return;
     onSave(formData);
   };
 
@@ -37,8 +37,8 @@ export default function RestaurantForm({ initialData, onSave, onCancel }) {
             <Text style={styles.label}>Type (e.g. Cafe)</Text>
             <TextInput 
               style={styles.input} 
-              value={formData.type} 
-              onChangeText={(txt) => setFormData({...formData, type: txt})} 
+              value={formData.res_type} 
+              onChangeText={(txt) => setFormData({...formData, res_type: txt})} 
             />
           </View>
           <View style={{flex: 1}}>
@@ -55,8 +55,8 @@ export default function RestaurantForm({ initialData, onSave, onCancel }) {
         <TextInput 
           style={[styles.input, {height: 80}]} 
           multiline 
-          value={formData.address} 
-          onChangeText={(txt) => setFormData({...formData, address: txt})} 
+          value={formData.location} 
+          onChangeText={(txt) => setFormData({...formData, location: txt})} 
         />
 
         <Text style={styles.label}>Phone Number</Text>
