@@ -1,7 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 
 export default function RestaurantDetails({ restaurant, onBack, onManageMenu, onDeleteReview }) {
+  
+  // Safety Check: If data hasn't loaded yet, don't render anything
+  if (!restaurant) return null;
+
+  // 1. Handle Reviews safely (default to empty array if null)
+  const reviews = restaurant?.reviews || [];
+
+  // 2. Handle WiFi (Support both Python Backend 'wifi_ssid' and old mock 'wifi.ssid')
+  const wifiSSID = restaurant?.wifi_ssid || restaurant?.wifi?.ssid || 'Not Configured';
+  const wifiPass = restaurant?.wifi_password || restaurant?.wifi?.pass || 'N/A';
+
   return (
     <ScrollView style={styles.container}>
       <TouchableOpacity onPress={onBack} style={styles.backBtn}>
@@ -10,18 +21,28 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
 
       {/* Header Info */}
       <View style={styles.headerCard}>
-        <Text style={styles.title}>{restaurant.name}</Text>
-        <Text style={styles.subtitle}>{restaurant.type} • {restaurant.cuisine}</Text>
-        <Text style={styles.meta}>ID: {restaurant.id} | Created: {restaurant.createdAt}</Text>
+        {/* Use ?. to safely access properties */}
+        <Text style={styles.title}>{restaurant?.name || 'Unknown Name'}</Text>
+        <Text style={styles.subtitle}>
+          {restaurant?.res_type || 'Type N/A'} • {restaurant?.cuisine || 'Cuisine N/A'}
+        </Text>
+        <Text style={styles.meta}>
+          ID: {restaurant?.id} | Created: {restaurant?.createdAt || 'N/A'}
+        </Text>
       </View>
 
       {/* Contact & Location */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>📍 Contact & Address</Text>
-        <Text style={styles.infoText}>Address: {restaurant.address}</Text>
-        <Text style={styles.infoText}>Phone: {restaurant.phone}</Text>
-        <Text style={styles.infoText}>Email: {restaurant.email}</Text>
-        <View style={styles.mapBox}><Text style={{color:'#999'}}>Google Map Placeholder</Text></View>
+        
+        {/* Fallback text if data is missing */}
+        <Text style={styles.infoText}>Address: {restaurant?.address || 'Not provided'}</Text>
+        <Text style={styles.infoText}>Phone: {restaurant?.phone || 'Not provided'}</Text>
+        <Text style={styles.infoText}>Email: {restaurant?.email || 'Not provided'}</Text>
+        
+        <View style={styles.mapBox}>
+            <Text style={{color:'#999'}}>Google Map Placeholder</Text>
+        </View>
       </View>
 
       {/* WiFi Details */}
@@ -29,12 +50,16 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
         <Text style={styles.sectionTitle}>📶 WiFi Management</Text>
         <View style={styles.wifiRow}>
           <View>
-            <Text style={{fontWeight: 'bold'}}>SSID: {restaurant.wifi.ssid}</Text>
-            <Text>Pass: {restaurant.wifi.pass}</Text>
+            <Text style={{fontWeight: 'bold'}}>SSID: {wifiSSID}</Text>
+            <Text>Pass: {wifiPass}</Text>
           </View>
-          <View style={styles.qrCode}><Text style={{fontSize: 8, color:'white'}}>QR</Text></View>
+          <View style={styles.qrCode}>
+            <Text style={{fontSize: 8, color:'white'}}>QR</Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.editLink}><Text style={{color:'blue'}}>+ Update WiFi Details</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.editLink}>
+            <Text style={{color:'blue'}}>+ Update WiFi Details</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Menu Shortcut */}
@@ -46,17 +71,26 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
       {/* Reviews Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>⭐ Customer Reviews</Text>
-        {restaurant.reviews.length > 0 ? restaurant.reviews.map(review => (
-          <View key={review.id} style={styles.reviewCard}>
-            <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-              <Text style={{fontWeight:'bold'}}>{review.user} ({review.rating}/5)</Text>
-              <TouchableOpacity onPress={() => onDeleteReview(restaurant.id, review.id)}>
-                <Text style={{color:'red', fontSize:12}}>Delete</Text>
-              </TouchableOpacity>
+        
+        {/* Check if reviews array exists and has items */}
+        {reviews.length > 0 ? (
+          reviews.map((review, index) => (
+            // Use index as key fallback if review.id is missing
+            <View key={review?.id || index} style={styles.reviewCard}>
+              <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+                <Text style={{fontWeight:'bold'}}>
+                    {review?.user || 'Anonymous'} ({review?.rating || 0}/5)
+                </Text>
+                <TouchableOpacity onPress={() => onDeleteReview(restaurant.id, review.id)}>
+                  <Text style={{color:'red', fontSize:12}}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.reviewText}>{review?.text || 'No comment'}</Text>
             </View>
-            <Text style={styles.reviewText}>{review.text}</Text>
-          </View>
-        )) : <Text style={{fontStyle:'italic', color:'#888'}}>No reviews yet.</Text>}
+          ))
+        ) : (
+          <Text style={{fontStyle:'italic', color:'#888'}}>No reviews yet.</Text>
+        )}
       </View>
     </ScrollView>
   );
