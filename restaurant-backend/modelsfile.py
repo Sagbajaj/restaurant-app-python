@@ -78,23 +78,23 @@ def get_db():
     finally: db.close()
 
 # --- NEW AUTHENTICATION LOGIC (BCRYPT) ---
-@app.post("/api/login")
-def login(username: str, password: str, db: Session = Depends(get_db)):
-    # 1. Fetch user
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
-        raise HTTPException(status_code=400, detail="User not found")
+# @app.post("/api/login")
+# def login(username: str, password: str, db: Session = Depends(get_db)):
+#     # 1. Fetch user
+#     user = db.query(User).filter(User.username == username).first()
+#     if not user:
+#         raise HTTPException(status_code=400, detail="User not found")
 
-    # 2. Verify password using BCRYPT directly
-    try:
-        # Encode inputs to bytes for checking
-        if not bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
-             raise HTTPException(status_code=400, detail="Incorrect password")
-    except Exception as e:
-        print(f"Auth Error: {e}")
-        raise HTTPException(status_code=500, detail="Authentication error")
+#     # 2. Verify password using BCRYPT directly
+#     try:
+#         # Encode inputs to bytes for checking
+#         if not bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
+#              raise HTTPException(status_code=400, detail="Incorrect password")
+#     except Exception as e:
+#         print(f"Auth Error: {e}")
+#         raise HTTPException(status_code=500, detail="Authentication error")
     
-    return {"message": "Login successful", "username": user.username}
+#     return {"message": "Login successful", "username": user.username}
 
 # # --- OTHER ROUTES ---
 # @app.get("/api/restaurants", response_model=List[RestaurantSchema])
