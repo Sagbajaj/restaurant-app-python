@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from routers import authRouter as auth
 from routers import restaurantsRouter as restaurant
-
+from routers import menuRouter as menu
 
 # --- DB MODELS ---
 # class User(Base):
@@ -72,6 +72,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(restaurant.router)
+app.include_router(menu.router)
 
 # --- OTHER ROUTES ---
 # @app.get("/api/restaurants", response_model=List[RestaurantSchema])
