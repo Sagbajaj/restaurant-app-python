@@ -5,7 +5,7 @@ from typing import List
 from database import get_db
 from models.menu import Menu
 from models.restaurants import Restaurant
-from schemas.menuSchema import MenuCreate, MenuResponse
+from schemas.menuSchema import MenuCreate, MenuResponse, MenuUpdate
 
 router = APIRouter(
     prefix="/api/menus",
@@ -43,3 +43,27 @@ def delete_menu_item(menu_id: int, db: Session = Depends(get_db)):
     db.delete(item)
     db.commit()
     return None
+
+@router.put("/menus/{menu_id}")
+def update_menu_item(menu_id: int, menu_data: MenuUpdate, db: Session = Depends(get_db)):
+    # 1. Get the existing menu item from the DB
+    menu_item = db.query(Menu).filter(Menu.id == menu_id).first()
+
+    # 2. Check if it exists
+    if not menu_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Menu item with id {menu_id} not found"
+        )
+
+    # 3. Update the fields provided in the request
+    # exclude_unset=True ensures we don't overwrite existing data with None 
+    # if the user didn't send that field.
+    for key, value in menu_data.dict(exclude_unset=True).items():
+        setattr(menu_item, key, value)
+
+    # 4. Commit and Refresh
+    db.commit()
+    db.refresh(menu_item)
+
+    return menu_item

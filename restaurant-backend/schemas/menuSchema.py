@@ -20,3 +20,13 @@ class MenuResponse(MenuBase):
 
     class Config:
         from_attributes = True
+        
+class MenuUpdate(BaseModel):
+    name: Optional[str] = None
+    price: Optional[float] = None
+    description: Optional[str] = None
+    is_vegetarian: Optional[bool] = None
+    image_url: Optional[str] = None
+
+class Config:
+    orm_mode = True
