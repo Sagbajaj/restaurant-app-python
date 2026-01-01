@@ -8,7 +8,7 @@ class Restaurant(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     # You must define this property explicitly
-    menu_items = relationship("MenuItem", back_populates="restaurant")
+    menu_items = relationship("Menu", back_populates="restaurant")
     res_type = Column(String) # e.g., "Cafe", "Fine Dining"
     cuisine = Column(String)  # e.g., "Indian", "Italian"
     location = Column(String) # e.g., "Mumbai"
