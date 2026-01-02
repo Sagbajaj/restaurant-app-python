@@ -5,12 +5,16 @@ export default function MenuScreen({ restaurant, onBack }) {
   const [menuItems, setMenuItems] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   
+  // Track if we are editing (null means we are Adding new)
+  const [editingItem, setEditingItem] = useState(null);
+
   // Form State
   const [dishName, setDishName] = useState('');
   const [price, setPrice] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isVegetarian, setIsVegetarian] = useState(true);
 
+  // NOTE: Ensure this matches your backend URL exactly (no trailing slash usually)
   const BASE_URL = 'https://restaurant-app-python.onrender.com/api/menus';
 
   // 1. FETCH MENU ON LOAD
@@ -30,44 +34,83 @@ export default function MenuScreen({ restaurant, onBack }) {
     }
   };
 
-  // 2. ADD ITEM TO BACKEND
-  const handleAddItem = async () => {
+  // 2. OPEN MODAL HELPERS
+  const openAddModal = () => {
+    setEditingItem(null); // We are adding
+    resetForm();
+    setModalVisible(true);
+  };
+
+  const openEditModal = (item) => {
+    setEditingItem(item); // We are editing this item
+    setDishName(item.name);
+    setPrice(item.price.toString());
+    setImageUrl(item.image_url || '');
+    setIsVegetarian(item.is_vegetarian);
+    setModalVisible(true);
+  };
+
+  // 3. HANDLE SAVE (ADD OR EDIT)
+  const handleSave = async () => {
     if (!dishName || !price) {
       Alert.alert("Error", "Name and Price are required");
       return;
     }
 
+    const payload = {
+      name: dishName,
+      price: parseFloat(price),
+      image_url: imageUrl,
+      is_vegetarian: isVegetarian,
+      restaurant_id: restaurant.id
+    };
+
     try {
-      const response = await fetch(BASE_URL + '/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: dishName,
-          price: parseFloat(price),
-          image_url: imageUrl,
-          is_vegetarian: isVegetarian,
-          restaurant_id: restaurant.id
-        }),
-      });
+      let response;
+      
+      if (editingItem) {
+        // --- EDIT MODE (PUT) ---
+        response = await fetch(`${BASE_URL}/${editingItem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // --- ADD MODE (POST) ---
+        response = await fetch(BASE_URL + '/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
 
       if (response.ok) {
-        const newItem = await response.json();
-        setMenuItems([...menuItems, newItem]); // Update UI instantly
-        setModalVisible(false); // Close Modal
+        const savedItem = await response.json();
+
+        if (editingItem) {
+          // Update the list locally by replacing the old item
+          setMenuItems(menuItems.map(item => item.id === editingItem.id ? savedItem : item));
+        } else {
+          // Append new item
+          setMenuItems([...menuItems, savedItem]);
+        }
+
+        setModalVisible(false);
         resetForm();
       } else {
-        Alert.alert("Error", "Failed to add item");
+        Alert.alert("Error", "Failed to save item");
       }
     } catch (error) {
       Alert.alert("Error", "Network error");
+      console.error(error);
     }
   };
 
-  // 3. DELETE ITEM
+  // 4. DELETE ITEM
   const handleDelete = async (itemId) => {
     try {
       await fetch(`${BASE_URL}/${itemId}`, { method: 'DELETE' });
-      setMenuItems(menuItems.filter(item => item.id !== itemId)); // Remove from UI
+      setMenuItems(menuItems.filter(item => item.id !== itemId));
     } catch (error) {
       console.error(error);
     }
@@ -78,6 +121,7 @@ export default function MenuScreen({ restaurant, onBack }) {
     setPrice('');
     setImageUrl('');
     setIsVegetarian(true);
+    setEditingItem(null);
   };
 
   return (
@@ -90,7 +134,7 @@ export default function MenuScreen({ restaurant, onBack }) {
       <Text style={styles.header}>Menu: {restaurant.name}</Text>
 
       {/* --- ADD BUTTON --- */}
-      <TouchableOpacity style={styles.addBtn} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={styles.addBtn} onPress={openAddModal}>
         <Text style={styles.btnText}>+ Add New Dish</Text>
       </TouchableOpacity>
 
@@ -100,7 +144,7 @@ export default function MenuScreen({ restaurant, onBack }) {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
-            <View style={{flexDirection:'row', alignItems:'center'}}>
+            <View style={{flexDirection:'row', alignItems:'center', flex: 1}}>
                {/* Show Image if available, else placeholder */}
                {item.image_url ? (
                  <Image source={{uri: item.image_url}} style={styles.foodImg} />
@@ -113,18 +157,27 @@ export default function MenuScreen({ restaurant, onBack }) {
                </View>
             </View>
             
-            <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.delBtn}>
-              <Text style={styles.smBtnText}>Delete</Text>
-            </TouchableOpacity>
+            {/* Buttons Row */}
+            <View style={styles.actionButtons}>
+                <TouchableOpacity onPress={() => openEditModal(item)} style={styles.editBtn}>
+                    <Text style={styles.smBtnText}>Edit</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.delBtn}>
+                    <Text style={styles.smBtnText}>Delete</Text>
+                </TouchableOpacity>
+            </View>
           </View>
         )}
       />
 
-      {/* --- ADD MODAL --- */}
+      {/* --- ADD/EDIT MODAL --- */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Dish</Text>
+            <Text style={styles.modalTitle}>
+                {editingItem ? "Edit Dish" : "Add New Dish"}
+            </Text>
             
             <TextInput 
               style={styles.input} 
@@ -149,8 +202,11 @@ export default function MenuScreen({ restaurant, onBack }) {
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
                 <Text style={styles.btnText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleAddItem}>
-                <Text style={styles.btnText}>Save</Text>
+              
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+                <Text style={styles.btnText}>
+                    {editingItem ? "Update" : "Save"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -168,11 +224,17 @@ const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
   addBtn: { backgroundColor: '#4CAF50', padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 20 },
   btnText: { color: 'white', fontWeight: 'bold' },
+  
+  // Item Card
   itemCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
   itemName: { fontSize: 16, fontWeight: 'bold' },
   itemPrice: { color: '#666' },
   foodImg: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#eee' },
   placeholderImg: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#eee', justifyContent:'center', alignItems:'center' },
+  
+  // Action Buttons
+  actionButtons: { flexDirection: 'row', alignItems: 'center' },
+  editBtn: { backgroundColor: '#2196F3', padding: 8, borderRadius: 5, marginRight: 10 },
   delBtn: { backgroundColor: '#F44336', padding: 8, borderRadius: 5 },
   smBtnText: { color: 'white', fontSize: 12 },
   

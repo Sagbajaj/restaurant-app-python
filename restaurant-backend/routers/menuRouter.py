@@ -44,7 +44,7 @@ def delete_menu_item(menu_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None
 
-@router.put("/menus/{menu_id}")
+@router.put("/{menu_id}")
 def update_menu_item(menu_id: int, menu_data: MenuUpdate, db: Session = Depends(get_db)):
     # 1. Get the existing menu item from the DB
     menu_item = db.query(Menu).filter(Menu.id == menu_id).first()
