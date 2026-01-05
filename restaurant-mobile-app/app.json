@@ -20,7 +20,13 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sagarb3101.ExpenseApp"
+      "package": "com.sagarb3101.ExpenseApp",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAZ7DfLeqnjmW7X6j88KAOBqdveHCUKhAo" 
+        }
+      }
+      
     },
     "web": {
       "output": "static",

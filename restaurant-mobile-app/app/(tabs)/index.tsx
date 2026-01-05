@@ -8,6 +8,7 @@ import AdminDashboard from '../../src/screens/AdminDashboard';
 import RestaurantDetails from '../../src/screens/RestaurantDetails';
 import RestaurantForm from '../../src/screens/RestaurantForm';
 import MenuScreen from '../../src/screens/MenuScreen';
+import LiveTrackingScreen from '../../src/screens/LiveTrackingScreen';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('HOME');
@@ -15,7 +16,17 @@ export default function App() {
   const [loading, setLoading] = useState(true); // Loading state
   const [selectedRest, setSelectedRest] = useState(null);
   const [user, setUser] = useState(null);
+  const [isTracking, setIsTracking] = useState(false); // <--- New State
 
+  // 1. Show Tracking Screen
+  if (isTracking && selectedRest) {
+    return (
+      <LiveTrackingScreen 
+        route={{ params: { restaurant: selectedRest } }} 
+        navigation={{ goBack: () => setIsTracking(false) }} 
+      />
+    );
+  }
   const BASE_URL = 'https://restaurant-app-python.onrender.com/api/restaurants';
 
   // --- 1. FETCH DATA FROM SERVER ON LOAD ---

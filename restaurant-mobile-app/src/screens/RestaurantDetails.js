@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Linking, P
 import MapView, { Marker } from 'react-native-maps';
 import QRCode from 'react-native-qrcode-svg';
 
-export default function RestaurantDetails({ restaurant, onBack, onManageMenu, onDeleteReview }) {
+export default function RestaurantDetails({ restaurant, onBack, onManageMenu, onDeleteReview, onTrackOrder}) {
   const [qrModalVisible, setQrModalVisible] = useState(false);
 
   // Safety check to prevent crash if data is missing
@@ -119,6 +119,13 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
         <TouchableOpacity style={styles.menuBar} onPress={onManageMenu}>
           <Text style={styles.menuBarText}>Manage Menu Items</Text>
           <Text style={styles.menuBarText}>→</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+            style={{backgroundColor: '#FF9800', padding: 15, borderRadius: 10, marginTop: 10, alignItems: 'center'}} 
+            onPress={onTrackOrder}
+        >
+            <Text style={{color: 'white', fontWeight: 'bold'}}>🚴 Live Tracking Demo</Text>
         </TouchableOpacity>
 
         {/* Reviews Section */}

@@ -1,10 +1,32 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Optional
 from routers import authRouter as auth
 from routers import restaurantsRouter as restaurant
 from routers import menuRouter as menu
 
+
+class ConnectionManager:
+    def __init__(self):
+        # Stores active connections: { order_id: [socket1, socket2] }
+        self.active_connections: Dict[str, List[WebSocket]] = {}
+
+    async def connect(self, websocket: WebSocket, order_id: str):
+        await websocket.accept()
+        if order_id not in self.active_connections:
+            self.active_connections[order_id] = []
+        self.active_connections[order_id].append(websocket)
+
+    def disconnect(self, websocket: WebSocket, order_id: str):
+        if order_id in self.active_connections:
+            if websocket in self.active_connections[order_id]:
+                self.active_connections[order_id].remove(websocket)
+
+    async def broadcast(self, message: dict, order_id: str):
+        if order_id in self.active_connections:
+            for connection in self.active_connections[order_id]:
+                await connection.send_json(message)
+                
 # --- DB MODELS ---
 # class User(Base):
 #     __tablename__ = "users"
@@ -61,6 +83,8 @@ from routers import menuRouter as menu
     # class Config: from_attributes = True
 
 # --- APP ---
+manager = ConnectionManager()
+
 app = FastAPI()
 
 app.add_middleware(
@@ -73,6 +97,18 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(restaurant.router)
 app.include_router(menu.router)
+
+@app.websocket("/ws/track/{order_id}")
+async def websocket_endpoint(websocket: WebSocket, order_id: str):
+    await manager.connect(websocket, order_id)
+    try:
+        while True:
+            # Receive data (from Driver/Simulator)
+            data = await websocket.receive_json()
+            # Broadcast it (to Customer/Map)
+            await manager.broadcast(data, order_id)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, order_id)
 
 # --- OTHER ROUTES ---
 # @app.get("/api/restaurants", response_model=List[RestaurantSchema])
