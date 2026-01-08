@@ -1,7 +1,13 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
-
-export default function AdminDashboard({ data, onLogout, onViewDetails, onAddPress, onEditPress }) {
+import React, { useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import ReviewsModal from '../components/ReviewsModal';
+// Added 'onShowReviews' to props so we can click the tab
+export default function AdminDashboard({ data, onLogout, onViewDetails, onAddPress, onEditPress, onShowReviews }) {
+  const [isReviewModalVisible, setReviewModalVisible] = useState(false);
+  // Helper: Aggregate all reviews from all restaurants into one list
+  const allReviews = data.flatMap(restaurant => 
+    (restaurant.reviews || []).map(r => ({ ...r, restaurantName: restaurant.name }))
+  );
   return (
     <SafeAreaView style={styles.container}>
       {/* 1. Header / Navbar */}
@@ -14,9 +20,17 @@ export default function AdminDashboard({ data, onLogout, onViewDetails, onAddPre
 
       {/* 2. Sidebar Simulation (Tabs) */}
       <View style={styles.tabsContainer}>
-        <Text style={[styles.tabItem, styles.activeTab]}>Restaurants</Text>
-        <Text style={styles.tabItem}>Reviews</Text>
-        <Text style={styles.tabItem}>Wifi Details</Text>
+        {/* Restaurants (Active) */}
+        <TouchableOpacity disabled={true}>
+            <Text style={[styles.tabItem, styles.activeTab]}>Restaurants</Text>
+        </TouchableOpacity>
+
+        {/* Reviews (Clickable - Triggers Modal) */}
+        <TouchableOpacity onPress={onShowReviews}>
+            <Text style={styles.tabItem}>Reviews</Text>
+        </TouchableOpacity>
+
+        {/* REMOVED Wifi Details Tab as requested */}
       </View>
 
       {/* 3. Add Button */}
@@ -24,37 +38,42 @@ export default function AdminDashboard({ data, onLogout, onViewDetails, onAddPre
         <Text style={styles.btnText}>+ Add Restaurant</Text>
       </TouchableOpacity>
 
-  
-
       {/* 4. List of Restaurants */}
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()} // Ensure ID is string
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={{flex: 1}}>
               <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.cardSub}>{item.address}</Text>
+              <Text style={styles.cardSub}>{item.res_type}</Text>
             </View>
             
             <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.viewBtn} onPress={() => onViewDetails(item)}>
                     <Text style={styles.smallBtnText}>View</Text>
                 </TouchableOpacity>
-               
-  <TouchableOpacity style={styles.editBtn} onPress={() => onEditPress(item)}>
-     <Text style={styles.smallBtnText}>Edit</Text>
-  </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.editBtn} onPress={() => onEditPress(item)}>
+                    <Text style={styles.smallBtnText}>Edit</Text>
+                </TouchableOpacity>
             </View>
           </View>
         )}
+      />
+      {/* 5. Render the Modal at the bottom */}
+      <ReviewsModal 
+        visible={isReviewModalVisible} 
+        onClose={() => setReviewModalVisible(false)}
+        reviews={allReviews}
+        title="All System Reviews"
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // FIX: Force background color to white
   container: { flex: 1, backgroundColor: '#f5f5f5', padding: 15 },
   
   navBar: { 

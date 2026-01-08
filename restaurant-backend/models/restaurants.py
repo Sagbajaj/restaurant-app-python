@@ -9,6 +9,7 @@ class Restaurant(Base):
     name = Column(String, index=True)
     # You must define this property explicitly
     menu_items = relationship("Menu", back_populates="restaurant")
+    reviews = relationship("Review", back_populates="restaurant", cascade="all, delete-orphan")
     res_type = Column(String) # e.g., "Cafe", "Fine Dining"
     cuisine = Column(String)  # e.g., "Indian", "Italian"
     location = Column(String) # e.g., "Mumbai"

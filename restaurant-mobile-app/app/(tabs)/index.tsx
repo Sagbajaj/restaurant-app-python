@@ -9,6 +9,7 @@ import RestaurantDetails from '../../src/screens/RestaurantDetails';
 import RestaurantForm from '../../src/screens/RestaurantForm';
 import MenuScreen from '../../src/screens/MenuScreen';
 import LiveTrackingScreen from '../../src/screens/LiveTrackingScreen';
+import ReviewsModal from '@/src/components/ReviewsModal';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('HOME');
@@ -17,8 +18,10 @@ export default function App() {
   const [selectedRest, setSelectedRest] = useState(null);
   const [user, setUser] = useState(null);
   const [isTracking, setIsTracking] = useState(false); // <--- New State
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [modalReviews, setModalReviews] = useState<any[]>([]); // Use your Review interface here if available
+  const [isLoading, setIsLoading] = useState(false);
 
- 
   const BASE_URL = 'https://restaurant-app-python.onrender.com/api/restaurants';
 
   // --- 1. FETCH DATA FROM SERVER ON LOAD ---
@@ -141,6 +144,86 @@ export default function App() {
     }
   };
 
+  const fetchAllReviews = async () => {
+    try {
+      // 1. Start Loading
+      setIsLoading(true);
+  
+      // 2. Hit the URL (Replace with your actual API endpoint)
+      // If you need to send an Auth Token, add it to headers
+      const response = await fetch('https://restaurant-app-python.onrender.com/api/reviews/all-reviews', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${userToken}`, // Uncomment if you use login tokens
+        },
+      });
+  
+      // 3. Check for server errors (404, 500, etc.)
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+  
+      // 4. Parse JSON data
+      const data = await response.json();
+  
+      // 5. Update State
+      // Note: Ensure 'data' matches the array format your Modal expects
+      setModalReviews(data); 
+      setModalVisible(true);
+  
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to fetch reviews from server.");
+    } finally {
+      // 6. Stop Loading (runs whether success or fail)
+      setIsLoading(false);
+    }
+  };
+
+  const fetchRestaurantReviews = async (restaurantId) => {
+    // Safety check
+    if (!restaurantId) {
+      console.error("No restaurant ID provided");
+      return;
+    }
+  
+    try {
+      setIsLoading(true);
+  
+      // 1. Construct the URL
+      // I am assuming your backend endpoint structure here. 
+      // It is likely one of these two formats:
+      // Option A: /api/reviews/restaurant/{id}
+      // Option B: /api/reviews?restaurant_id={id}
+      const url = `https://restaurant-app-python.onrender.com/api/reviews/${restaurantId}`;
+  
+      // 2. Fetch
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+  
+      const data = await response.json();
+  
+      // 3. Update the SAME state variables used by the Modal
+      setModalReviews(data);
+      setModalVisible(true);
+  
+    } catch (error) {
+      console.error("Error fetching restaurant reviews:", error);
+      Alert.alert("Error", "Could not load reviews.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // --- LOADING SCREEN ---
   if (loading) {
     return (
@@ -166,13 +249,35 @@ export default function App() {
 
   if (currentScreen === 'ADMIN_DASHBOARD') {
     return (
-      <AdminDashboard 
-        data={restaurants} 
-        onLogout={() => { setUser(null); navigateTo('HOME'); }}
-        onViewDetails={(item: null | undefined) => navigateTo('REST_DETAILS', item)}
-        onAddPress={() => navigateTo('ADD_FORM')}
-        onEditPress={(item: null | undefined) => navigateTo('EDIT_FORM', item)}
-      />
+      <>
+        <AdminDashboard 
+          data={restaurants} 
+          onLogout={() => { setUser(null); navigateTo('HOME'); }}
+          onViewDetails={(item: any) => navigateTo('REST_DETAILS', item)}
+          onAddPress={() => navigateTo('ADD_FORM')}
+          onEditPress={(item: any) => navigateTo('EDIT_FORM', item)}
+          
+          // Pass the function we defined above
+          onShowReviews={fetchAllReviews}
+        />
+  
+        {isLoading && (
+          <View style={{
+            position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
+            backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center'
+          }}>
+            <ActivityIndicator size="large" color="#FF9800" />
+          </View>
+        )}
+
+        {/* Render the Common Modal here as a sibling */}
+        <ReviewsModal 
+          visible={isModalVisible}
+          onClose={() => setModalVisible(false)}
+          reviews={modalReviews}
+          title="All System Reviews"
+        />
+      </>
     );
   }
 
@@ -186,13 +291,20 @@ export default function App() {
 
   if (currentScreen === 'REST_DETAILS') {
     return (
-      <RestaurantDetails 
-        restaurant={selectedRest} 
-        onBack={() => navigateTo('ADMIN_DASHBOARD')} 
+      <><RestaurantDetails
+        restaurant={selectedRest}
+        onBack={() => navigateTo('ADMIN_DASHBOARD')}
         onManageMenu={() => navigateTo('MENU_PAGE', selectedRest)}
         onDeleteReview={handleDeleteReview}
-        onTrackOrder={() => setIsTracking(true)}
-      />
+        onTrackOrder={() => setIsTracking(true)} />
+        
+        <ReviewsModal
+          visible={isModalVisible}
+          onClose={() => setModalVisible(false)}
+          reviews={modalReviews}
+          title={selectedRest ? `Reviews: ${selectedRest.name}` : "Reviews"} 
+          />
+        </>
     );
   }
 

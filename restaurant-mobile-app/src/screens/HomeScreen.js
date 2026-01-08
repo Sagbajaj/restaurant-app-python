@@ -19,7 +19,7 @@ export default function HomeScreen({ data, onAdminPress }) {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{item.name}</Text>
-            <Text style={styles.cardSub}>{item.type} • {item.location}</Text>
+            <Text style={styles.cardSub}>{item.res_type} • {item.address} • {item.cuisine}</Text>
           </View>
         )}
       />

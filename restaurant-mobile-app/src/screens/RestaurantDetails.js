@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Linking, P
 // USE YOUR SAFEMAP TO PREVENT WEB CRASHES
 import MapView, { Marker } from 'react-native-maps';
 import QRCode from 'react-native-qrcode-svg';
+import ReviewsModal from '../components/ReviewsModal';
 
 export default function RestaurantDetails({ restaurant, onBack, onManageMenu, onDeleteReview, onTrackOrder}) {
   const [qrModalVisible, setQrModalVisible] = useState(false);
-
+  const [reviewModalVisible, setReviewModalVisible] = useState(false); // 3. State for reviews modal
   // Safety check to prevent crash if data is missing
   if (!restaurant) return null;
 
@@ -130,25 +131,26 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
 
         {/* Reviews Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⭐ Customer Reviews</Text>
-          {reviews.length > 0 ? (
-            reviews.map((review, index) => (
-              <View key={review.id || index} style={styles.reviewCard}>
-                <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-                  <Text style={{fontWeight:'bold'}}>
-                      {review.user || 'Anonymous'} ({review.rating || 0}/5)
-                  </Text>
-                  <TouchableOpacity onPress={() => onDeleteReview(restaurant.id, review.id)}>
-                    <Text style={{color:'red', fontSize:12}}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.reviewText}>{review.text || 'No comment'}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={{fontStyle:'italic', color:'#888'}}>No reviews yet.</Text>
-          )}
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+            <Text style={styles.sectionTitle}>⭐ Customer Reviews</Text>
+            
+            {/* Button to open Modal */}
+            <TouchableOpacity onPress={() => setReviewModalVisible(true)}>
+              <Text style={{color: '#2196F3', fontWeight: 'bold'}}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Show just a sneak peek (first 2 reviews) */}
+          {reviews.slice(0, 2).map((review, index) => (
+             <View key={review.id || index} style={styles.reviewCard}>
+               <Text style={{fontWeight:'bold'}}>{review.user} ({review.rating}/5)</Text>
+               <Text numberOfLines={2} style={styles.reviewText}>{review.text}</Text>
+             </View>
+          ))}
+          
+          {reviews.length === 0 && <Text style={{color:'#888', fontStyle:'italic'}}>No reviews yet.</Text>}
         </View>
+        
       </ScrollView>
 
       {/* QR MODAL */}
@@ -166,6 +168,13 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
               </View>
           </View>
       </Modal>
+
+      <ReviewsModal 
+        visible={reviewModalVisible} 
+        onClose={() => setReviewModalVisible(false)}
+        reviews={reviews}
+        title={`Reviews for ${restaurant.name}`}
+      />
     </View>
   );
 }
