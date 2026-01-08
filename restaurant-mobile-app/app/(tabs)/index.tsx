@@ -18,15 +18,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [isTracking, setIsTracking] = useState(false); // <--- New State
 
-  // 1. Show Tracking Screen
-  if (isTracking && selectedRest) {
-    return (
-      <LiveTrackingScreen 
-        route={{ params: { restaurant: selectedRest } }} 
-        navigation={{ goBack: () => setIsTracking(false) }} 
-      />
-    );
-  }
+ 
   const BASE_URL = 'https://restaurant-app-python.onrender.com/api/restaurants';
 
   // --- 1. FETCH DATA FROM SERVER ON LOAD ---
@@ -57,6 +49,16 @@ export default function App() {
     if (data) setSelectedRest(data);
     setCurrentScreen(screen);
   };
+
+   // 1. Show Tracking Screen
+   if (isTracking && selectedRest) {
+    return (
+      <LiveTrackingScreen 
+        route={{ params: { restaurant: selectedRest } }} 
+        navigation={{ goBack: () => setIsTracking(false) }} 
+      />
+    );
+  }
 
   // --- CLOUD ACTION: LOGIN ---
   const handleLogin = (username: React.SetStateAction<null>, role: any) => {
@@ -189,6 +191,7 @@ export default function App() {
         onBack={() => navigateTo('ADMIN_DASHBOARD')} 
         onManageMenu={() => navigateTo('MENU_PAGE', selectedRest)}
         onDeleteReview={handleDeleteReview}
+        onTrackOrder={() => setIsTracking(true)}
       />
     );
   }

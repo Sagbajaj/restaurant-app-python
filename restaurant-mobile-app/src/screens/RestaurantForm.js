@@ -5,16 +5,7 @@ import * as Location from 'expo-location';
 
 export default function RestaurantForm({ initialData, onSave, onCancel }) {
   
-  // Helper to parse coordinates
-  const getInitialCoords = (locString) => {
-    if (!locString) return { latitude: 19.0760, longitude: 72.8777 }; // Default: Mumbai
-    const parts = locString.split(',');
-    if (parts.length === 2 && !isNaN(parts[0])) {
-      return { latitude: parseFloat(parts[0]), longitude: parseFloat(parts[1]) };
-    }
-    return { latitude: 19.0760, longitude: 72.8777 };
-  };
-
+ 
   // --- STATE ---
   const [formData, setFormData] = useState({
     id: null, name: '', res_type: '', cuisine: '', address: '', phone: '', email: '', website: '', wifi_ssid: '', wifi_password: ''
@@ -59,6 +50,15 @@ export default function RestaurantForm({ initialData, onSave, onCancel }) {
       });
     }
   }, [initialData]);
+ // Helper to parse coordinates
+ const getInitialCoords = (locString) => {
+  if (!locString) return { latitude: 19.0760, longitude: 72.8777 }; // Default: Mumbai
+  const parts = locString.split(',');
+  if (parts.length === 2 && !isNaN(parts[0])) {
+    return { latitude: parseFloat(parts[0]), longitude: parseFloat(parts[1]) };
+  }
+  return { latitude: 19.0760, longitude: 72.8777 };
+};
 
 
   // --- FEATURE: GET CURRENT LOCATION ---
