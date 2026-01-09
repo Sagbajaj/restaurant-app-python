@@ -15,4 +15,4 @@ class Review(Base):
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
     
     # CHANGE 2: back_populates matches the variable name in Restaurant model ('reviews')
-    # restaurant = relationship("Restaurant", back_populates="Review")
+    restaurant = relationship("Restaurant", back_populates="reviews")
