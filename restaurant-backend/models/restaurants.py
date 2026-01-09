@@ -26,4 +26,4 @@ class Restaurant(Base):
     
     # 2. Reviews
     # The string "Review" here MUST match 'class Review' in the other file.
-    reviews = relationship("Review", back_populates="Restaurant", cascade="all, delete-orphan")
+    # reviews = relationship("Review", back_populates="Restaurant", cascade="all, delete-orphan")
