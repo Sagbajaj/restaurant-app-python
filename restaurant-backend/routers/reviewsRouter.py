@@ -16,9 +16,7 @@ router = APIRouter(
 def get_reviews(db: Session = Depends(get_db)):
     return db.query(Reviews).all()
 
-@router.get("/{restaurant_id}", response_model=ReviewBase)
+@router.get("/{restaurant_id}", response_model=List[ReviewBase])
 def get_restaurant_reviews(restaurant_id: int, db: Session = Depends(get_db)):
-    reviews = db.query(Reviews).filter(Reviews.restaurant_id == restaurant_id).first()
-    if not reviews:
-        raise HTTPException(status_code=404, detail="No reviews found")
+    reviews = db.query(Reviews).filter(Reviews.restaurant_id == restaurant_id).all()
     return reviews

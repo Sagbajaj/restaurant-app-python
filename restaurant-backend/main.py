@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import authRouter as auth
 from routers import restaurantsRouter as restaurant
 from routers import menuRouter as menu
+from routers import reviewsRouter as reviews
 
 
 class ConnectionManager:
@@ -97,6 +98,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(restaurant.router)
 app.include_router(menu.router)
+app.include_router(reviews.router)
 
 @app.websocket("/ws/track/{order_id}")
 async def websocket_endpoint(websocket: WebSocket, order_id: str):
