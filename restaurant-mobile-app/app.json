@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "ExpenseApp",
-    "slug": "ExpenseApp",
+    "name": "puneeats",
+    "slug": "puneeats",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "expenseapp",
+    "scheme": "puneeats",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -20,7 +20,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sagarb3101.ExpenseApp"
+      "package": "com.sagarb3101.puneeats",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAZ7DfLeqnjmW7X6j88KAOBqdveHCUKhAo" 
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -48,8 +53,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4193bca9-6ad4-45d1-a887-6dc1b05228b1"
+        "projectId": "28fd9af4-ae00-4916-9fc3-ccb6235598a7"
       }
-    }
+    },
+    "owner": "sagarb3101"
   }
 }

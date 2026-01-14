@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Linking, Platform } from 'react-native';
-// USE YOUR SAFEMAP TO PREVENT WEB CRASHES
+import React, { useState,useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Linking, Platform, ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import QRCode from 'react-native-qrcode-svg';
-import ReviewsModal from '../components/ReviewsModal';
+// import ReviewsModal from '../components/ReviewsModal';
 
-export default function RestaurantDetails({ restaurant, onBack, onManageMenu, onDeleteReview, onTrackOrder}) {
+export default function RestaurantDetails({ restaurant, onBack, onManageMenu, onTrackOrder, onShowRestaurantReviews}) {
   const [qrModalVisible, setQrModalVisible] = useState(false);
-  const [reviewModalVisible, setReviewModalVisible] = useState(false); // 3. State for reviews modal
-  // Safety check to prevent crash if data is missing
+  // 2. NEW: Local state to hold reviews for the preview list
+  const [previewReviews, setPreviewReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
   if (!restaurant) return null;
 
   const reviews = restaurant.reviews || [];
   const wifiSSID = restaurant.wifi_ssid || restaurant.wifi?.ssid;
   const wifiPass = restaurant.wifi_password || restaurant.wifi?.pass;
+
+  // 3. NEW: Fetch reviews automatically when this screen mounts
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        setLoadingReviews(true);
+        // Use the same URL structure as your App.js
+        const response = await fetch(`https://restaurant-app-python.onrender.com/api/reviews/${restaurant.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPreviewReviews(data);
+        }
+      } catch (error) {
+        console.error("Failed to load review previews", error);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+
+    loadReviews();
+  }, [restaurant.id]); // Re-run if restaurant ID changes
 
   // Helper: Parse location string
   const getCoords = (locString) => {
@@ -134,21 +155,35 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
             <Text style={styles.sectionTitle}>⭐ Customer Reviews</Text>
             
-            {/* Button to open Modal */}
-            <TouchableOpacity onPress={() => setReviewModalVisible(true)}>
+            {/* Clicking this opens the Parent Modal (View All) */}
+            <TouchableOpacity onPress={onShowRestaurantReviews}>
               <Text style={{color: '#2196F3', fontWeight: 'bold'}}>View All</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Show just a sneak peek (first 2 reviews) */}
-          {reviews.slice(0, 2).map((review, index) => (
-             <View key={review.id || index} style={styles.reviewCard}>
-               <Text style={{fontWeight:'bold'}}>{review.user} ({review.rating}/5)</Text>
-               <Text numberOfLines={2} style={styles.reviewText}>{review.text}</Text>
-             </View>
-          ))}
-          
-          {reviews.length === 0 && <Text style={{color:'#888', fontStyle:'italic'}}>No reviews yet.</Text>}
+          {/* LOADING STATE */}
+          {loadingReviews ? (
+             <ActivityIndicator size="small" color="#999" />
+          ) : (
+            <>
+              {/* SHOW PREVIEW: Map over 'previewReviews' instead of 'restaurant.reviews' */}
+              {previewReviews.length > 0 ? (
+                previewReviews.slice(0, 3).map((review, index) => ( // Only show top 3
+                  <View key={review.id || index} style={styles.reviewCard}>
+                    <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+                      <Text style={{fontWeight:'bold'}}>
+                          {review.user || 'Anonymous'} ({review.rating}/5)
+                      </Text>
+                      {/* Optional: Add date here if available */}
+                    </View>
+                    <Text numberOfLines={2} style={styles.reviewText}>{review.text}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={{fontStyle:'italic', color:'#888'}}>No reviews yet.</Text>
+              )}
+            </>
+          )}
         </View>
         
       </ScrollView>
@@ -169,12 +204,12 @@ export default function RestaurantDetails({ restaurant, onBack, onManageMenu, on
           </View>
       </Modal>
 
-      <ReviewsModal 
+      {/* <ReviewsModal 
         visible={reviewModalVisible} 
         onClose={() => setReviewModalVisible(false)}
         reviews={reviews}
         title={`Reviews for ${restaurant.name}`}
-      />
+      /> */}
     </View>
   );
 }

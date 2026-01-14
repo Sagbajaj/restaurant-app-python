@@ -1,6 +1,26 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import ReviewsModal from '../components/ReviewsModal';
+import OffersCarousel from '../screens/OffersCarousel';
+
+const offersData = [
+  {
+    id: 1,
+    title: 'FLAT 30% OFF',
+    description: 'On orders above ₹199',
+  },
+  {
+    id: 2,
+    title: 'FREE DELIVERY',
+    description: 'For first 5 orders',
+  },
+  {
+    id: 3,
+    title: 'BUY 1 GET 1',
+    description: 'Selected restaurants only',
+  },
+];
+
 // Added 'onShowReviews' to props so we can click the tab
 export default function AdminDashboard({ data, onLogout, onViewDetails, onAddPress, onEditPress, onShowReviews }) {
   const [isReviewModalVisible, setReviewModalVisible] = useState(false);
@@ -62,6 +82,7 @@ export default function AdminDashboard({ data, onLogout, onViewDetails, onAddPre
           </View>
         )}
       />
+      <OffersCarousel offers={offersData} />
       {/* 5. Render the Modal at the bottom */}
       <ReviewsModal 
         visible={isReviewModalVisible} 

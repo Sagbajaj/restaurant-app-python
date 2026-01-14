@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } fr
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 // ⚠️ KEEP YOUR API KEY HERE
+  const GOOGLE_API_KEY = "AIzaSyAZ7DfLeqnjmW7X6j88KAOBqdveHCUKhAo"; 
 
 export default function LiveTrackingScreen({ route, navigation }) {
   const { restaurant } = route.params || {};
